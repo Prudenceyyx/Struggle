@@ -1,4 +1,4 @@
-//// Daniel Shiffman
+//Added Surface Constrain
 
 //Thread Demo
 import toxi.physics2d.constraints.*;
@@ -6,6 +6,8 @@ import toxi.physics2d.behaviors.*;
 import toxi.physics2d.*;
 import toxi.geom.*;
 import toxi.math.*;
+import toxi.util.*;
+import toxi.processing.*;
 
 import java.util.Iterator;
 
@@ -14,6 +16,11 @@ int REST_LENGTH = 5;
 
 VerletPhysics2D physics;
 VerletParticle2D head,tail;
+
+ToxiclibsSupport gfx;
+
+Polygon2D poly;
+PolygonConstraint polyConstraint;
 
 boolean isTailLocked;
 
@@ -28,11 +35,27 @@ void setup() {
   head=s.getHead();
   //head.lock();
   tail=s.getTail();
+  
+  //poly constrain
+  poly = new Circle(100).toPolygon2D(9).translate(width / 2, height / 2);
+  poly.get(0).x *= 0.66f;
+  
+  gfx = new ToxiclibsSupport(this);
+
+  
+  polyConstraint = new PolygonConstraint(poly,false);
+  
+  VerletPhysics2D.addConstraintToAll(polyConstraint, s.particles);
+  
+  
 }
 
 void draw() {
-  background(0);
-  stroke(255,100);
+  background(255);
+  //stroke(255,100);
+    gfx.polygon2D(poly); 
+  stroke(0);
+  strokeWeight(2);
   noFill();
   //head.set(mouseX,mouseY);
   physics.update();
@@ -42,6 +65,7 @@ void draw() {
   //  vertex(p.x,p.y);
   //}
   //endShape();
+  
   for(VerletSpring2D s : physics.springs) {
     line(s.a.x,s.a.y, s.b.x, s.b.y);
   }
@@ -54,6 +78,8 @@ void draw() {
 void mousePressed() {
   Vec2D stepDir=new Vec2D(1,1).normalizeTo(REST_LENGTH);
   ParticleString2D s=new ParticleString2D(physics, new Vec2D(mouseX,mouseY), stepDir, NUM_PARTICLES, 1, 0.1);
+  VerletPhysics2D.addConstraintToAll(polyConstraint, s.particles);
+  
   //isTailLocked=!isTailLocked;
   //if (isTailLocked) {
   //  tail.lock();
