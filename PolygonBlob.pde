@@ -1,4 +1,13 @@
+void initBlobDetection() {
+  theBlobDetection = new BlobDetection(opencv.width, opencv.height);
+  theBlobDetection.setPosDiscrimination(false);//detect black area
+  theBlobDetection.setThreshold(0.8f);
+}
+
+
 class PolygonBlob extends Polygon {
+  
+  int contourDistance=80;
 
   // took me some time to make this method fully self-sufficient
   // now it works quite well in creating a correct polygon from a person's blob
@@ -32,7 +41,7 @@ class PolygonBlob extends Polygon {
             float dn = dist(eA.x*kinectWidth, eA.y*kinectHeight, fn.x*kinectWidth, fn.y*kinectHeight); 
             float dp = dist(eA.x*kinectWidth, eA.y*kinectHeight, fp.x*kinectWidth, fp.y*kinectHeight); 
             // if either distance is bigger than 15 
-            if (dn > 15 || dp > 15) {
+            if (dn > contourDistance || dp > contourDistance) {
               // if the current contour size is bigger than zero
               if (contour.size() > 0) {
                 // add final point
@@ -62,7 +71,8 @@ class PolygonBlob extends Polygon {
   // 1. The correct order of contours
   // 2. The correct direction of each contour
 
-  // as long as there are contours left...    
+  // as long as there are contours left... 
+   ArrayList<Vec2D> ps=new ArrayList<Vec2D>();
   while (contours.size() > 0) {
 
     // find next contour
@@ -126,15 +136,70 @@ class PolygonBlob extends Polygon {
     if (selectedPoint > 0) { 
       Collections.reverse(contour);
     }
+    
+   
+    
     // add all the points in the contour to the polygon
     for (Object o : contour) {
       PVector p=(PVector)o;
       addPoint(int(p.x), int(p.y));
+      Vec2D v=new Vec2D(int(p.x), int(p.y));
+      ps.add(v);
     }
+    
     // remove this contour from the list of contours
     contours.remove(selectedContour);
     // the while loop above makes all of this code loop until the number of contours is zero
     // at that time all the points in all the contours have been added to the polygon... in the correct order (hopefully)
   }
+  
+  //transform blob into toxi.Polygon2D object
+  //if(ps.size()>0){
+    poly=new Polygon2D(ps);
+  //}else{
+  //  poly=null;
+  //}
+  
 }
+
+// ==================================================
+// drawBlobsAndEdges()
+// ==================================================
+void drawBlobsAndEdges(boolean drawBlobs, boolean drawEdges)
+{
+  noFill();
+  Blob b;
+  EdgeVertex eA, eB;
+  for (int n=0; n<theBlobDetection.getBlobNb(); n++)
+  {
+    b=theBlobDetection.getBlob(n);
+    if (b!=null)
+    {
+      // Edges
+      if (drawEdges)
+      {
+        strokeWeight(2);
+        stroke(0, 255, 0);
+        for (int m=0; m<b.getEdgeNb(); m++)
+        {
+          eA = b.getEdgeVertexA(m);
+          eB = b.getEdgeVertexB(m);
+          if (eA !=null && eB !=null)
+            line(eA.x*kinectWidth, eA.y*kinectHeight, eB.x*kinectWidth, eB.y*kinectHeight);
+        }
+      }
+
+      // Blobs
+      if (drawBlobs)
+      {
+        strokeWeight(1);
+        stroke(255, 0, 0);
+        rect(b.xMin*kinectWidth, b.yMin*kinectHeight, b.w*kinectWidth, b.h*kinectHeight);
+      }
+    }
+  }
+}
+
+
+
 }
